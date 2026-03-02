@@ -63,7 +63,9 @@
 | <img width="48px" src=".github/assets/client-pi.png" alt="Pi" /> | [Pi](https://github.com/badlogic/pi-mono) | `~/.pi/agent/sessions/` | ✅ 対応 |
 | <img width="48px" src=".github/assets/client-kimi.png" alt="Kimi" /> | [Kimi CLI](https://github.com/MoonshotAI/kimi-cli) | `~/.kimi/sessions/` | ✅ 対応 |
 | <img width="48px" src=".github/assets/client-qwen.png" alt="Qwen" /> | [Qwen CLI](https://github.com/QwenLM/qwen-cli) | `~/.qwen/projects/` | ✅ 対応 |
-| <img width="48px" src=".github/assets/client-synthetic.png" alt="Synthetic" /> | [Synthetic](https://synthetic.new/) | `hf:`モデルや`synthetic`プロバイダを検出して他ソースから再帰属（+ Octofriend: `~/.local/share/octofriend/sqlite.db`） | ✅ 対応 |
+| <img width="48px" src=".github/assets/client-roocode.png" alt="Roo Code" /> | [Roo Code](https://github.com/RooCodeInc/Roo-Code) | `~/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/tasks/` (+ server: `~/.vscode-server/data/User/globalStorage/rooveterinaryinc.roo-cline/tasks/`) | ✅ 対応 |
+| <img width="48px" src=".github/assets/client-kilocode.png" alt="Kilo" /> | [Kilo](https://github.com/Kilo-Org/kilocode) | `~/.config/Code/User/globalStorage/kilocode.kilo-code/tasks/` (+ server: `~/.vscode-server/data/User/globalStorage/kilocode.kilo-code/tasks/`) | ✅ 対応 |
+| <img width="48px" src=".github/assets/client-synthetic.png" alt="Synthetic" /> | [Synthetic](https://synthetic.new/) | `hf:`モデルや`synthetic`プロバイダを検出して他ソースから再帰属（+ [Octofriend](https://github.com/synthetic-lab/octofriend): `~/.local/share/octofriend/sqlite.db`） | ✅ 対応 |
 
 [🚅 LiteLLMの価格データ](https://github.com/BerriAI/litellm)を使用してリアルタイム価格計算を提供し、階層型価格モデルとキャッシュトークン割引をサポートしています。
 
@@ -92,12 +94,14 @@ AI支援開発の時代において、**トークンは新しいエネルギー*
   - [ソーシャルプラットフォームコマンド](#ソーシャルプラットフォームコマンド)
   - [Cursor IDEコマンド](#cursor-ideコマンド)
   - [出力例](#出力例--lightバージョン)
+  - [設定](#設定)
   - [環境変数](#環境変数)
 - [フロントエンド可視化](#フロントエンド可視化)
   - [機能](#機能-1)
   - [フロントエンドの実行](#フロントエンドの実行)
 - [ソーシャルプラットフォーム](#ソーシャルプラットフォーム)
   - [機能](#機能-2)
+  - [GitHubプロフィール埋め込みウィジェット](#githubプロフィール埋め込みウィジェット)
   - [はじめに](#はじめに)
   - [データ検証](#データ検証)
 - [Wrapped 2025](#wrapped-2025)
@@ -125,7 +129,7 @@ AI支援開発の時代において、**トークンは新しいエネルギー*
   - 9色テーマのGitHubスタイル貢献グラフ
   - リアルタイムフィルタリングとソート
   - ゼロフリッカーレンダリング（ネイティブZigエンジン）
-- **マルチプラットフォームサポート** - OpenCode、Claude Code、Codex CLI、Cursor IDE、Gemini CLI、Amp、Droid、OpenClaw、Pi、Kimi CLI、Qwen CLI、Synthetic全体の使用量追跡
+- **マルチプラットフォームサポート** - OpenCode、Claude Code、Codex CLI、Cursor IDE、Gemini CLI、Amp、Droid、OpenClaw、Pi、Kimi CLI、Qwen CLI、Roo Code、Kilo、Synthetic全体の使用量追跡
 - **リアルタイム価格** - 1時間ディスクキャッシュ付きでLiteLLMから現在の価格を取得；OpenRouter自動フォールバックと新規モデル向けCursor価格サポート
 - **詳細な内訳** - 入力、出力、キャッシュ読み書き、推論トークン追跡
 - **ネイティブRustコア** - 10倍高速な処理のため、すべての解析と集計をRustで実行
@@ -144,6 +148,9 @@ curl -fsSL https://bun.sh/install | bash
 
 # bunxで直接実行
 bunx tokscale@latest
+
+# ライトモード（OpenTUIなし、テーブルレンダリングのみ）
+bunx tokscale@latest --light
 ```
 
 これだけです！セットアップ不要で完全なインタラクティブTUI体験が得られます。
@@ -236,7 +243,7 @@ tokscale models --json > report.json   # ファイルに保存
   - `q`: 終了
 - **マウスサポート**: タブ、ボタン、フィルターをクリック
 - **テーマ**: Green、Halloween、Teal、Blue、Pink、Purple、Orange、Monochrome、YlGnBu
-- **設定の永続化**: テーマ設定は`~/.config/tokscale/tui-settings.json`に保存
+- **設定の永続化**: 設定は`~/.config/tokscale/settings.json`に保存（[設定](#設定)を参照）
 
 ### グループ基準戦略
 
@@ -293,6 +300,24 @@ tokscale --kimi
 
 # Qwen CLIの使用量のみ表示
 tokscale --qwen
+
+# Ampの使用量のみ表示
+tokscale --amp
+
+# Droidの使用量のみ表示
+tokscale --droid
+
+# OpenClawの使用量のみ表示
+tokscale --openclaw
+
+# Piの使用量のみ表示
+tokscale --pi
+
+# Roo Codeの使用量のみ表示
+tokscale --roocode
+
+# Kiloの使用量のみ表示
+tokscale --kilocode
 
 # Synthetic (synthetic.new) の使用量のみ表示
 tokscale --synthetic
@@ -438,6 +463,25 @@ tokscale cursor logout --all --purge-cache
 
 <img alt="CLI Light" src="./.github/assets/cli-light.png" />
 
+### 設定
+
+Tokscaleは設定を`~/.config/tokscale/settings.json`に保存します：
+
+```json
+{
+  "colorPalette": "blue",
+  "includeUnusedModels": false
+}
+```
+
+| 設定 | タイプ | デフォルト | 説明 |
+|---------|------|---------|-------------|
+| `colorPalette` | string | `"blue"` | TUIカラーテーマ（green、halloween、teal、blue、pink、purple、orange、monochrome、ylgnbu） |
+| `includeUnusedModels` | boolean | `false` | レポートでゼロトークンのモデルを表示 |
+| `autoRefreshEnabled` | boolean | `false` | TUIの自動更新を有効化 |
+| `autoRefreshMs` | number | `60000` | 自動更新間隔（30000-3600000ms） |
+| `nativeTimeoutMs` | number | `300000` | ネイティブサブプロセス処理の最大時間（5000-3600000ms） |
+
 ### 環境変数
 
 環境変数は設定ファイルの値をオーバーライドします。CI/CDや一時的な使用向け：
@@ -527,7 +571,7 @@ tokscale sources --json
 - **インタラクティブツールチップ**: ホバーで詳細な日別内訳を表示
 - **日別内訳パネル**: クリックでソース別、モデル別の詳細を確認
 - **年別フィルタリング**: 年間を移動
-- **ソースフィルタリング**: プラットフォーム別フィルター（OpenCode、Claude、Codex、Cursor、Gemini、Amp、Droid、OpenClaw、Pi、Kimi、Qwen、Synthetic）
+- **ソースフィルタリング**: プラットフォーム別フィルター（OpenCode、Claude、Codex、Cursor、Gemini、Amp、Droid、OpenClaw、Pi、Kimi、Qwen、Roo Code、Kilo、Synthetic）
 - **統計パネル**: 総コスト、トークン、活動日数、連続記録
 - **FOUC防止**: Reactハイドレーション前にテーマを適用（フラッシュなし）
 
@@ -552,6 +596,22 @@ Tokscaleには使用量データを共有し、他の開発者と競争できる
 - **期間フィルタリング** - 全期間、今月、今週の統計を表示
 - **GitHub統合** - GitHubアカウントでログイン
 - **ローカルビューアー** - 送信せずにプライベートにデータを表示
+
+### GitHubプロフィール埋め込みウィジェット
+
+GitHubプロフィールREADMEにTokscaleの公開統計を直接埋め込むことができます：
+
+```md
+[![Tokscale Stats](https://tokscale.ai/api/embed/<username>/svg)](https://tokscale.ai/u/<username>)
+```
+
+- `<username>`をGitHubユーザー名に置き換えてください
+- オプションのクエリパラメータ：
+  - `theme=light` ライトテーマを使用
+  - `sort=tokens`（デフォルト）または`sort=cost` ランキング基準を制御
+  - `compact=1` コンパクトレイアウト + コンパクトな数値表記（例：`1.2M`、`$3.4K`）
+- 例：
+  - `https://tokscale.ai/api/embed/<username>/svg?theme=light&sort=cost&compact=1`
 
 ### はじめに
 
@@ -791,6 +851,8 @@ AIコーディングツールはクロスプラットフォームの場所にセ
 | Pi | `~/.pi/` | `%USERPROFILE%\.pi\` | すべてのプラットフォームで同じパス |
 | Kimi CLI | `~/.kimi/` | `%USERPROFILE%\.kimi\` | すべてのプラットフォームで同じパス |
 | Qwen CLI | `~/.qwen/` | `%USERPROFILE%\.qwen\` | すべてのプラットフォームで同じパス |
+| Roo Code | `~/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/tasks/` | `%USERPROFILE%\.config\Code\User\globalStorage\rooveterinaryinc.roo-cline\tasks\` | VS Code globalStorageタスクログ |
+| Kilo | `~/.config/Code/User/globalStorage/kilocode.kilo-code/tasks/` | `%USERPROFILE%\.config\Code\User\globalStorage\kilocode.kilo-code\tasks\` | VS Code globalStorageタスクログ |
 | Synthetic | 他ソースから再帰属 | 他ソースから再帰属 | `hf:`モデル + `synthetic`プロバイダを検出 |
 
 > **注**: Windowsでは`~`は`%USERPROFILE%`に展開されます（例：`C:\Users\ユーザー名`）。これらのツールは`%APPDATA%`のようなWindowsネイティブパスではなく、クロスプラットフォームの一貫性のためにUnixスタイルのパス（`.local/share`など）を意図的に使用しています。
@@ -985,6 +1047,39 @@ StatusUpdate メッセージを含む wire.jsonl 形式：
 - `candidatesTokenCount` → 出力トークン
 - `thoughtsTokenCount` → 推論/思考トークン
 - `cachedContentTokenCount` → キャッシュされた入力トークン
+
+### Roo Code
+
+場所：
+- ローカル：`~/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/tasks/{TASK_ID}/ui_messages.json`
+- サーバー（ベストエフォート）：`~/.vscode-server/data/User/globalStorage/rooveterinaryinc.roo-cline/tasks/{TASK_ID}/ui_messages.json`
+
+各タスクディレクトリには、モデル/エージェントメタデータに使用される`<environment_details>`ブロックを含む`api_conversation_history.json`も含まれる場合があります。
+
+`ui_messages.json`はUIイベントの配列です。Tokscaleは以下のみをカウントします：
+- `type == "say"`
+- `say == "api_req_started"`
+
+`text`フィールドはトークン/コストメタデータを含むJSONです：
+```json
+{
+  "type": "say",
+  "say": "api_req_started",
+  "ts": "2026-02-18T12:00:00Z",
+  "text": "{\"cost\":0.12,\"tokensIn\":100,\"tokensOut\":50,\"cacheReads\":20,\"cacheWrites\":5,\"apiProtocol\":\"anthropic\"}"
+}
+```
+
+### Kilo
+
+場所：
+- ローカル：`~/.config/Code/User/globalStorage/kilocode.kilo-code/tasks/{TASK_ID}/ui_messages.json`
+- サーバー（ベストエフォート）：`~/.vscode-server/data/User/globalStorage/kilocode.kilo-code/tasks/{TASK_ID}/ui_messages.json`
+
+KiloはRoo Codeと同じタスクログ形式を使用します。Tokscaleは同じルールを適用します：
+- `ui_messages.json`から`say/api_req_started`イベントのみをカウント
+- `text` JSONから`tokensIn`、`tokensOut`、`cacheReads`、`cacheWrites`、`cost`、`apiProtocol`を解析
+- 利用可能な場合、隣接する`api_conversation_history.json`からモデル/エージェントメタデータを補完
 
 ### Synthetic (synthetic.new)
 
