@@ -55,7 +55,7 @@ pub const CLIENT_UI: [ClientUi; ClientId::COUNT] = [
         hotkey: 'r',
     },
     ClientUi {
-        display_name: "KiloCode",
+        display_name: "Kilo",
         hotkey: 'k',
     },
 ];

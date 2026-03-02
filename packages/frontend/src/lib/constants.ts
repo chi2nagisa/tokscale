@@ -37,7 +37,7 @@ export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   kimi: "Kimi",
   qwen: "Qwen",
   roocode: "Roo Code",
-  kilocode: "KiloCode",
+  kilocode: "Kilo",
   synthetic: "Synthetic",
 };
 
