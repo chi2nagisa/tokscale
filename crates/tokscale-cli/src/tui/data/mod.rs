@@ -278,6 +278,14 @@ impl DataLoader {
                         .collect();
                     all_messages.extend(msgs);
                 }
+                ClientId::Mux => {
+                    let msgs: Vec<UnifiedMessage> = scan_result
+                        .get(ClientId::Mux)
+                        .par_iter()
+                        .flat_map(|path| sessions::mux::parse_mux_file(path))
+                        .collect();
+                    all_messages.extend(msgs);
+                }
             }
         }
 
@@ -693,7 +701,7 @@ mod tests {
     #[test]
     fn test_client_all() {
         let clients = ClientId::ALL;
-        assert_eq!(clients.len(), 13);
+        assert_eq!(clients.len(), 14);
         assert_eq!(clients[0], ClientId::OpenCode);
         assert_eq!(clients[1], ClientId::Claude);
         assert_eq!(clients[2], ClientId::Codex);
@@ -707,6 +715,7 @@ mod tests {
         assert_eq!(clients[10], ClientId::Qwen);
         assert_eq!(clients[11], ClientId::RooCode);
         assert_eq!(clients[12], ClientId::KiloCode);
+        assert_eq!(clients[13], ClientId::Mux);
     }
 
     #[test]
