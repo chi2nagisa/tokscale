@@ -102,27 +102,34 @@ function resolveGitHubUsername(email: string, fallbackName: string): string {
 }
 
 function findAssociatedPR(commitHash: string): PRInfo | null {
-  const result = runJson<Array<{ number: number; title: string; author?: { login?: string } }>>(
+  const result = runJson<
+    Array<{ number: number; title: string; user?: { login?: string } }>
+  >(
     "gh",
-    [
-      "pr",
-      "list",
-      "--repo",
-      REPO,
-      "--state",
-      "merged",
-      "--search",
-      commitHash,
-      "--json",
-      "number,title,author",
-      "--limit",
-      "1",
-    ],
+    ["api", `repos/${REPO}/commits/${commitHash}/pulls`, "--jq", "."],
     true
   );
   const pr = result?.[0];
-  if (!pr?.number || !pr.author?.login) return null;
-  return { number: pr.number, title: pr.title, authorLogin: pr.author.login };
+  if (!pr?.number || !pr.user?.login) return null;
+
+  let title = pr.title;
+  if (title.includes("…")) {
+    const firstCommitMsg = run(
+      "gh",
+      [
+        "api",
+        `repos/${REPO}/pulls/${pr.number}/commits`,
+        "--jq",
+        ".[0].commit.message",
+      ],
+      true
+    );
+    if (firstCommitMsg) {
+      title = firstCommitMsg.split("\n")[0];
+    }
+  }
+
+  return { number: pr.number, title, authorLogin: pr.user.login };
 }
 
 function isFirstContributionAfter(login: string, thresholdDate: string): ContributorInfo | null {
