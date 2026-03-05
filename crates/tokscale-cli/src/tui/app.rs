@@ -407,8 +407,13 @@ impl App {
         self.clamp_selection();
     }
 
-    /// Clamp selection and scroll offset to valid bounds after data/resize changes
+    /// Clamp selection and scroll offset to valid bounds after data/resize changes.
+    /// Stats breakdown is skipped here because `render_breakdown_panel` clamps
+    /// with the actual panel height (not the full-terminal `max_visible_items`).
     fn clamp_selection(&mut self) {
+        if self.current_tab == Tab::Stats && self.selected_graph_cell.is_some() {
+            return;
+        }
         let len = self.get_current_list_len();
         if len == 0 {
             self.selected_index = 0;
