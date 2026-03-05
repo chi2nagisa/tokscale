@@ -412,7 +412,10 @@ fn render_breakdown_panel(frame: &mut Frame, app: &mut App, area: Rect) {
 
     let graph = match &app.data.graph {
         Some(g) => g,
-        None => return,
+        None => {
+            app.stats_breakdown_total_lines = 0;
+            return;
+        }
     };
 
     let day = match graph
@@ -423,6 +426,7 @@ fn render_breakdown_panel(frame: &mut Frame, app: &mut App, area: Rect) {
     {
         Some(d) => d,
         None => {
+            app.stats_breakdown_total_lines = 0;
             let no_data = Paragraph::new("No data for this day")
                 .style(Style::default().fg(app.theme.muted))
                 .alignment(Alignment::Center);
