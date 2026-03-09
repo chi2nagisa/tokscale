@@ -191,9 +191,20 @@ pub fn parse_codex_file(path: &Path) -> Vec<UnifiedMessage> {
                         continue;
                     };
 
-                    // Update previous totals
+                    // Advance the baseline for the next cumulative row. If the current row
+                    // only has incremental usage, extend the previous baseline by that amount
+                    // so a later resumed cumulative snapshot does not double count it.
                     if let Some(total) = total_usage {
                         previous_totals = Some(total);
+                    } else if let Some(last) = last_usage {
+                        previous_totals = previous_totals.map(|previous| {
+                            CodexTotals {
+                                input: previous.input.saturating_add(last.input),
+                                output: previous.output.saturating_add(last.output),
+                                cached: previous.cached.saturating_add(last.cached),
+                                reasoning: previous.reasoning.saturating_add(last.reasoning),
+                            }
+                        });
                     }
 
                     // Skip empty deltas
@@ -453,6 +464,28 @@ mod tests {
         let line2 = r#"{"timestamp":"2026-01-01T00:00:01Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30,"reasoning_output_tokens":5},"last_token_usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30,"reasoning_output_tokens":5}}}}"#;
         let line3 = r#"{"timestamp":"2026-01-01T00:00:02Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1}}}}"#;
         let content = format!("{}\n{}\n{}", line1, line2, line3);
+        let file = create_test_file(&content);
+
+        let messages = parse_codex_file(file.path());
+
+        assert_eq!(messages.len(), 2);
+        assert_eq!(messages[0].tokens.input, 80);
+        assert_eq!(messages[0].tokens.output, 30);
+        assert_eq!(messages[0].tokens.cache_read, 20);
+        assert_eq!(messages[0].tokens.reasoning, 5);
+        assert_eq!(messages[1].tokens.input, 8);
+        assert_eq!(messages[1].tokens.output, 3);
+        assert_eq!(messages[1].tokens.cache_read, 2);
+        assert_eq!(messages[1].tokens.reasoning, 1);
+    }
+
+    #[test]
+    fn test_token_count_advances_baseline_after_missing_total_fallback() {
+        let line1 = r#"{"timestamp":"2026-01-01T00:00:00Z","type":"turn_context","payload":{"model":"gpt-5.2"}}"#;
+        let line2 = r#"{"timestamp":"2026-01-01T00:00:01Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30,"reasoning_output_tokens":5},"last_token_usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30,"reasoning_output_tokens":5}}}}"#;
+        let line3 = r#"{"timestamp":"2026-01-01T00:00:02Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1}}}}"#;
+        let line4 = r#"{"timestamp":"2026-01-01T00:00:03Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":110,"cached_input_tokens":22,"output_tokens":33,"reasoning_output_tokens":6},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1}}}}"#;
+        let content = format!("{}\n{}\n{}\n{}", line1, line2, line3, line4);
         let file = create_test_file(&content);
 
         let messages = parse_codex_file(file.path());
