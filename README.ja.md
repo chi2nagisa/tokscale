@@ -15,6 +15,7 @@
 >
 > | [<img alt="GitHub Follow" src="https://img.shields.io/github/followers/junhoyeo?style=flat-square&logo=github&labelColor=black&color=24292f" width="156px" />](https://github.com/junhoyeo) | GitHubで[@junhoyeo](https://github.com/junhoyeo)をフォローして、他のプロジェクトもチェックしてください。AI、インフラ、その他様々な分野で開発しています。 |
 > | :-----| :----- |
+> [<img alt="Discord link" src="https://img.shields.io/discord/1480206352755458110?color=5865F2&label=discord&labelColor=black&logo=discord&logoColor=white&style=flat-square" width="156px" />](https://discord.gg/h6DUGWdBbm) | [Discord](https://discord.gg/h6DUGWdBbm)に参加しよう — ���界最高のバイバーたちと一緒に。 |
 
 <div align="center">
 
@@ -526,15 +527,15 @@ Codex CLIをJSON出力フラグ付きで実行すると（例：\`codex exec --j
 macOSでは、\`TOKSCALE_HEADLESS_DIR\`が設定されていない場合、Tokscaleは\`~/Library/Application Support/tokscale/headless/\`もスキャンします。
 
 Tokscaleは次のディレクトリ構造を自動的にスキャンします:
-\`\`\`
+```
 ~/.config/tokscale/headless/
 └── codex/       # Codex CLI JSONL出力
-\`\`\`
+```
 
 **環境変数:** \`TOKSCALE_HEADLESS_DIR\`を設定してヘッドレスログディレクトリをカスタマイズできます:
-\`\`\`bash
+```bash
 export TOKSCALE_HEADLESS_DIR="$HOME/my-custom-logs"
-\`\`\`
+```
 
 **推奨（自動キャプチャ）:**
 
@@ -550,15 +551,15 @@ export TOKSCALE_HEADLESS_DIR="$HOME/my-custom-logs"
 
 **診断:**
 
-\`\`\`bash
+```bash
 # スキャン場所とヘッドレスカウントを表示
 tokscale sources
 tokscale sources --json
-\`\`\`
+```
 
 **CI/CD統合例:**
 
-\`\`\`bash
+```bash
 # GitHub Actionsワークフローで
 - name: Run AI automation
   run: |
@@ -569,7 +570,7 @@ tokscale sources --json
 # 後で使用量を追跡
 - name: Report token usage
   run: tokscale --json
-\`\`\`
+```
 
 > **注**: ヘッドレスキャプチャはCodex CLIのみサポートしています。Codexを直接実行する場合は、上記のようにstdoutをヘッドレスディレクトリにリダイレクトしてください。
 
