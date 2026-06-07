@@ -88,11 +88,23 @@ fn extract_session_id(path: &Path) -> String {
 
 /// Check whether a wire.jsonl path belongs to kimi-code.
 pub fn is_kimi_code_path(path: &Path) -> bool {
-    path.components().any(|c| {
+    // 1) Default installation path contains .kimi-code segment
+    if path.components().any(|c| {
         c.as_os_str()
             .to_string_lossy()
             .eq_ignore_ascii_case(".kimi-code")
-    })
+    }) {
+        return true;
+    }
+
+    // 2) Custom KIMI_CODE_HOME directory
+    if let Ok(kimi_code_home) = std::env::var("KIMI_CODE_HOME") {
+        if !kimi_code_home.is_empty() && path.starts_with(&kimi_code_home) {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// Extract session ID from a kimi-code wire.jsonl path.
@@ -625,5 +637,18 @@ not valid json at all
         assert!(!is_kimi_code_path(std::path::Path::new(
             "/home/user/.kimi/sessions/group/uuid/wire.jsonl"
         )));
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn test_is_kimi_code_path_with_custom_home() {
+        std::env::set_var("KIMI_CODE_HOME", "/data/kimi");
+        assert!(is_kimi_code_path(std::path::Path::new(
+            "/data/kimi/sessions/ws/sess/agents/main/wire.jsonl"
+        )));
+        assert!(!is_kimi_code_path(std::path::Path::new(
+            "/home/user/.kimi/sessions/group/uuid/wire.jsonl"
+        )));
+        std::env::remove_var("KIMI_CODE_HOME");
     }
 }
