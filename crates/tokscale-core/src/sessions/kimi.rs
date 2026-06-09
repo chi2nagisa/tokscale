@@ -122,7 +122,10 @@ fn extract_session_id_from_kimi_code_path(path: &Path) -> String {
 
 /// Strip the "kimi-code/" prefix from model IDs emitted by kimi-code.
 fn normalize_kimi_code_model(model: &str) -> String {
-    model.strip_prefix("kimi-code/").unwrap_or(model).to_string()
+    model
+        .strip_prefix("kimi-code/")
+        .unwrap_or(model)
+        .to_string()
 }
 
 /// Kimi Code wire.jsonl line structure.
@@ -132,6 +135,8 @@ struct KimiCodeWireLine {
     line_type: String,
     model: Option<String>,
     usage: Option<KimiCodeUsage>,
+    #[serde(rename = "usageScope")]
+    usage_scope: Option<String>,
     time: Option<i64>,
 }
 
@@ -180,6 +185,15 @@ pub fn parse_kimi_code_file(path: &Path) -> Vec<UnifiedMessage> {
         // step.end also carries usage, but it duplicates the same usage.record
         // that was emitted in the same turn, so we ignore it to avoid double counting.
         if wire_line.line_type != "usage.record" {
+            continue;
+        }
+
+        // Only count turn-scoped usage. kimi-code tags every usage.record with
+        // usageScope: "turn" for per-step LLM calls made inside a user turn and
+        // "session" for non-turn bookkeeping (e.g. context compaction), and its
+        // own tooling treats a missing usageScope as session-scoped, so require
+        // an explicit "turn" to avoid counting aggregate records.
+        if wire_line.usage_scope.as_deref() != Some("turn") {
             continue;
         }
 
@@ -591,7 +605,7 @@ not valid json at all
 
     #[test]
     fn test_parse_kimi_code_model_normalization() {
-        let content = r#"{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":1,"output":1,"inputCacheRead":0,"inputCacheCreation":0},"time":1780319377014}"#;
+        let content = r#"{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":1,"output":1,"inputCacheRead":0,"inputCacheCreation":0},"usageScope":"turn","time":1780319377014}"#;
         let (_dir, fake_path) = create_kimi_code_test_file(content);
 
         let messages = parse_kimi_code_file(&fake_path);
@@ -601,28 +615,44 @@ not valid json at all
     #[test]
     fn test_parse_kimi_code_session_id_extraction() {
         assert_eq!(
-            extract_session_id_from_kimi_code_path(
-                std::path::Path::new("/home/user/.kimi-code/sessions/workspace/session-uuid/agents/main/wire.jsonl")
-            ),
+            extract_session_id_from_kimi_code_path(std::path::Path::new(
+                "/home/user/.kimi-code/sessions/workspace/session-uuid/agents/main/wire.jsonl"
+            )),
             "session-uuid"
         );
         assert_eq!(
-            extract_session_id_from_kimi_code_path(
-                std::path::Path::new("C:/Users/Alice/.kimi-code/sessions/workspace/sess-123/agents/coder/wire.jsonl")
-            ),
+            extract_session_id_from_kimi_code_path(std::path::Path::new(
+                "C:/Users/Alice/.kimi-code/sessions/workspace/sess-123/agents/coder/wire.jsonl"
+            )),
             "sess-123"
         );
         assert_eq!(
-            extract_session_id_from_kimi_code_path(
-                std::path::Path::new("wire.jsonl")
-            ),
+            extract_session_id_from_kimi_code_path(std::path::Path::new("wire.jsonl")),
             "unknown"
         );
     }
 
     #[test]
+    fn test_parse_kimi_code_only_counts_turn_scoped_usage() {
+        // "session"-scoped records are non-turn bookkeeping (e.g. compaction)
+        // and records without usageScope are treated as session-scoped by
+        // kimi-code itself; neither should be counted.
+        let content = r#"{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":999,"output":999,"inputCacheRead":0,"inputCacheCreation":0},"usageScope":"session","time":1780319377000}
+{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":888,"output":888,"inputCacheRead":0,"inputCacheCreation":0},"time":1780319377005}
+{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":100,"output":50,"inputCacheRead":0,"inputCacheCreation":0},"usageScope":"turn","time":1780319377010}"#;
+        let (_dir, fake_path) = create_kimi_code_test_file(content);
+
+        let messages = parse_kimi_code_file(&fake_path);
+
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].tokens.input, 100);
+        assert_eq!(messages[0].tokens.output, 50);
+        assert_eq!(messages[0].timestamp, 1780319377010);
+    }
+
+    #[test]
     fn test_parse_kimi_code_zero_tokens_skipped() {
-        let content = r#"{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":0,"output":0,"inputCacheRead":0,"inputCacheCreation":0},"time":1780319377014}"#;
+        let content = r#"{"type":"usage.record","model":"kimi-code/kimi-for-coding","usage":{"inputOther":0,"output":0,"inputCacheRead":0,"inputCacheCreation":0},"usageScope":"turn","time":1780319377014}"#;
         let (_dir, fake_path) = create_kimi_code_test_file(content);
 
         let messages = parse_kimi_code_file(&fake_path);
