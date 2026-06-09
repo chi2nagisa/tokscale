@@ -73,9 +73,11 @@ fn credentials_paths() -> Vec<std::path::PathBuf> {
 
     // 2) kimi-cli
     if let Some(home) = dirs::home_dir() {
-        paths.push(home.join(".kimi")
-            .join("credentials")
-            .join("kimi-code.json"));
+        paths.push(
+            home.join(".kimi")
+                .join("credentials")
+                .join("kimi-code.json"),
+        );
     }
 
     paths
@@ -91,7 +93,12 @@ fn read_credentials() -> Result<(Credentials, std::path::PathBuf)> {
     anyhow::bail!("No Kimi credentials found. Run 'kimi' to log in.")
 }
 
-fn save_credentials(path: &std::path::Path, access_token: &str, refresh_token: &str, expires_in: i64) {
+fn save_credentials(
+    path: &std::path::Path,
+    access_token: &str,
+    refresh_token: &str,
+    expires_in: i64,
+) {
     let expires_at = chrono::Utc::now().timestamp() as f64 + expires_in as f64;
     let json = serde_json::json!({
         "access_token": access_token,

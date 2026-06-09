@@ -799,12 +799,7 @@ fn scan_all_clients_with_env_strategy_inner(
         let kimi_path = ClientId::Kimi
             .data()
             .resolve_path_with_env_strategy(home_dir, use_env_roots);
-        push_unique_scan_task(
-            &mut tasks,
-            &mut seen_scan_roots,
-            ClientId::Kimi,
-            kimi_path,
-        );
+        push_unique_scan_task(&mut tasks, &mut seen_scan_roots, ClientId::Kimi, kimi_path);
 
         // Kimi Code: ~/.kimi-code/sessions/**/wire.jsonl (supports KIMI_CODE_HOME)
         let kimi_code_home = if use_env_roots {
@@ -3273,7 +3268,7 @@ mod tests {
 
         let result = scan_all_clients(home_dir.path().to_str().unwrap(), &["gjc".to_string()]);
         assert!(
-            result.get(ClientId::Gjc).len() >= 1,
+            !result.get(ClientId::Gjc).is_empty(),
             "expected at least 1 file from GJC_CONFIG_DIR root, got {:?}",
             result.get(ClientId::Gjc)
         );
@@ -3318,7 +3313,7 @@ mod tests {
 
         let result = scan_all_clients(home_dir.path().to_str().unwrap(), &["gjc".to_string()]);
         assert!(
-            result.get(ClientId::Gjc).len() >= 1,
+            !result.get(ClientId::Gjc).is_empty(),
             "expected at least 1 file from PI_CONFIG_DIR root, got {:?}",
             result.get(ClientId::Gjc)
         );
@@ -3365,7 +3360,7 @@ mod tests {
 
         let result = scan_all_clients(home_dir.path().to_str().unwrap(), &["gjc".to_string()]);
         assert!(
-            result.get(ClientId::Gjc).len() >= 1,
+            !result.get(ClientId::Gjc).is_empty(),
             "expected at least 1 file from XDG_DATA_HOME/gjc/sessions, got {:?}",
             result.get(ClientId::Gjc)
         );
